@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	defaultTimeout = 5 * time.Second
+)
+
 type CheckRequest struct {
 	IP   string `json:"ip"`
 	Port int    `json:"port"`
@@ -46,7 +50,7 @@ func (h *Handler) HandleCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Context with timeout
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 	defer cancel()
 
 	result := h.checker.Check(ctx, req.IP, req.Port)

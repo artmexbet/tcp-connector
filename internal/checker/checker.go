@@ -6,6 +6,12 @@ import (
 	"net"
 )
 
+const (
+	networkProtocol = "tcp"
+	statusClosed    = "closed"
+	statusOpen      = "open"
+)
+
 // PortStatus represents the result of a port check.
 type PortStatus struct {
 	IP     string `json:"ip"`
@@ -29,11 +35,11 @@ func (c *TCPChecker) Check(ctx context.Context, ip string, port int) PortStatus 
 	target := fmt.Sprintf("%s:%d", ip, port)
 
 	// We use the context for timeout
-	conn, err := c.dialer.DialContext(ctx, "tcp", target)
+	conn, err := c.dialer.DialContext(ctx, networkProtocol, target)
 
-	status := "closed"
+	status := statusClosed
 	if err == nil {
-		status = "open"
+		status = statusOpen
 		_ = conn.Close()
 	}
 

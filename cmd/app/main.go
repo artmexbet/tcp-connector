@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +11,13 @@ import (
 	"tcp-conntector/internal/api"
 	"tcp-conntector/internal/checker"
 	"time"
+)
+
+const (
+	shutdownTimeout = 5 * time.Second
+	readTimeout     = 10 * time.Second
+	writeTimeout    = 10 * time.Second
+	idleTimeout     = 60 * time.Second
 )
 
 func main() {
@@ -32,9 +39,9 @@ func main() {
 	srv := &http.Server{
 		Addr:         ":" + port,
 		Handler:      mux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	// Graceful shutdown setup
@@ -42,21 +49,23 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("Starting server on :%s", port)
+		slog.Info("Starting server", "port", port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Server failed: %v", err)
+			slog.Error("Server failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	// Wait for signal
 	<-done
-	log.Print("Server stopped")
+	slog.Info("Server stopped")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		slog.Error("Server Shutdown Failed", "error", err)
+		os.Exit(1)
 	}
-	log.Print("Server Exited Properly")
+	slog.Info("Server Exited Properly")
 }
