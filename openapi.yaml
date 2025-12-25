@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: TCP Port Checker API
+  description: A simple API to check TCP port connectivity.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local server
+paths:
+  /check:
+    post:
+      summary: Check TCP connection
+      description: Attempts to establish a TCP connection to the specified IP and port.
+      operationId: checkPort
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckRequest'
+      responses:
+        '200':
+          description: Successful check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResponse'
+        '400':
+          description: Invalid input
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    CheckRequest:
+      type: object
+      required:
+        - ip
+        - port
+      properties:
+        ip:
+          type: string
+          example: "1.1.1.1"
+          description: The IP address to check.
+        port:
+          type: integer
+          example: 80
+          description: The port number to check.
+    CheckResponse:
+      type: object
+      properties:
+        ip:
+          type: string
+          example: "1.1.1.1"
+        port:
+          type: integer
+          example: 80
+        status:
+          type: string
+          enum: [open, closed]
+          example: "open"
+          description: The status of the connection attempt.
